@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:alert_mate/utils/app_color.dart';
+import 'package:alert_mate/screen/dashboard/mycircle/add_contact_screen.dart';
 import 'package:alert_mate/utils/size_config.dart';
+import 'package:flutter/material.dart';
 
 class MyCircleScreen extends StatefulWidget {
   @override
@@ -19,7 +19,7 @@ class _MyCircleScreenState extends State<MyCircleScreen> {
   Widget _buildMainView() {
     return Column(
       children: [
-        _buildHeader('Emergency circle', true),
+        _buildHeader('Emergency circle', false),
         _buildSearchBar(),
         Expanded(
           child: ListView(
@@ -64,15 +64,31 @@ class _MyCircleScreenState extends State<MyCircleScreen> {
           if (!isMainView)
             GestureDetector(
               onTap: () => setState(() => _isDetailView = false),
-              child: Icon(Icons.arrow_back, color: Colors.black),
+              child: Icon(Icons.arrow_back, color: Colors.white),
             ),
-          Text(
-            title,
-            style: TextStyle(fontSize: 5.w, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            '+ Add ${isMainView ? 'Circle' : 'Contact'}',
-            style: TextStyle(fontSize: 3.5.w, color: Colors.orange),
+          Spacer(),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (context) => EmergencyContactScreen()),
+              );
+            },
+            child: Row(
+              children: [
+                // Text(
+                //   title,
+                //   style: TextStyle(
+                //       fontSize: 5.w,
+                //       color: Colors.white,
+                //       fontWeight: FontWeight.bold),
+                // ),
+                Text(
+                  '+ Add Contact',
+                  style: TextStyle(fontSize: 3.5.w, color: Colors.orange),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -88,7 +104,7 @@ class _MyCircleScreenState extends State<MyCircleScreen> {
           color: Colors.grey[200],
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Row(
+        child: const Row(
           children: [
             Expanded(
               child: TextField(
@@ -127,7 +143,8 @@ class _MyCircleScreenState extends State<MyCircleScreen> {
               child: Center(
                 child: Text(
                   name[0],
-                  style: TextStyle(color: color, fontSize: 6.w, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: color, fontSize: 6.w, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -135,8 +152,13 @@ class _MyCircleScreenState extends State<MyCircleScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: TextStyle(fontSize: 4.5.w, fontWeight: FontWeight.bold)),
-                Text(contacts, style: TextStyle(fontSize: 3.5.w, color: const Color.fromARGB(255, 255, 255, 255))),
+                Text(name,
+                    style: TextStyle(
+                        fontSize: 4.5.w, fontWeight: FontWeight.bold)),
+                Text(contacts,
+                    style: TextStyle(
+                        fontSize: 3.5.w,
+                        color: const Color.fromARGB(255, 255, 255, 255))),
               ],
             ),
           ],
@@ -152,7 +174,8 @@ class _MyCircleScreenState extends State<MyCircleScreen> {
         children: [
           CircleAvatar(
             radius: 6.w,
-            backgroundImage: AssetImage('assets/images/placeholder_avatar.png'),
+            backgroundImage:
+                const AssetImage('assets/images/placeholder_avatar.png'),
           ),
           SizedBox(width: 4.w),
           Text(name, style: TextStyle(fontSize: 4.5.w)),
