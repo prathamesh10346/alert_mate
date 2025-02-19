@@ -1,11 +1,11 @@
 import 'package:alert_mate/screen/dashboard/mycircle/mycircle.dart';
+import 'package:alert_mate/screen/dashboard/setting_screen.dart';
 import 'package:alert_mate/screen/services/AccidentEmergencyScreen.dart';
 import 'package:alert_mate/screen/services/FireEmergencyScreen.dart';
 import 'package:alert_mate/screen/services/MedicalEmergencyScreen.dart';
 import 'package:alert_mate/screen/services/NaturalDisasterScreen.dart';
 import 'package:alert_mate/screen/services/RescueEmergencyScreen.dart';
 import 'package:alert_mate/screen/services/ViolenceEmergencyScreen.dart';
-import 'package:alert_mate/screen/setting_screen.dart';
 import 'package:alert_mate/utils/app_color.dart';
 import 'package:alert_mate/utils/size_config.dart';
 import 'package:flutter/material.dart';
