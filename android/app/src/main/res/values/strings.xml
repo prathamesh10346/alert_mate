@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Device Details</string>
+    <string name="device_admin_description">Required for device security features</string>
+    <string name="accessibility_service_description">Required for device protection features</string>
+</resources>
