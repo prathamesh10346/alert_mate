@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:alert_mate/screen/geofencescreen.dart';
+import 'package:alert_mate/screen/devies_details/geofencescreen.dart';
 import 'package:alert_mate/services/Geolocation_service.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:geolocator/geolocator.dart';

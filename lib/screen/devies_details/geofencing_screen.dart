@@ -1,6 +1,6 @@
-import 'package:alert_mate/screen/geofencescreen.dart';
+import 'package:alert_mate/screen/devies_details/geofencescreen.dart';
 import 'package:flutter/material.dart';
-import '../services/geofencing_service.dart';
+import '../../services/geofencing_service.dart';
 
 class GeofencingScreen extends StatefulWidget {
   @override

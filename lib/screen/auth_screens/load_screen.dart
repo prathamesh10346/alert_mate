@@ -43,11 +43,9 @@ class _HomeLoadingScreenState extends State<HomeLoadingScreen>
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        gradient: AppColors.radialGradient,
-      ),
+    
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.darkBackground,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

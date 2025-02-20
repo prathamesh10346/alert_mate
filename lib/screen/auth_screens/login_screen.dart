@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
         gradient: AppColors.radialGradient,
       ),
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.darkBackground,
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(

@@ -1,4 +1,4 @@
-import 'package:alert_mate/screen/geofencing_screen.dart';
+import 'package:alert_mate/screen/devies_details/geofencing_screen.dart';
 import 'package:flutter/material.dart';
 
 class GeofenceApp extends StatelessWidget {

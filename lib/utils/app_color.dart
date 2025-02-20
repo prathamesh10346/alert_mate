@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primaryColor = Color.fromARGB(136, 255, 123, 0);
-  static const Color secondaryColor = Color.fromARGB(255, 26, 26, 26);
-  static const Color buttonColor = Color.fromARGB(151, 255, 123, 0);
-  static const Color lightWhiteColor = Color(0xFFE0E0E0);
-  static const Color appBarColor = Color(0xFF310048);
-  static const Color boxColor = Color(0xFF49036A);
-  static const Color textColor = Color(0xFFF025DC);
-  static const Color text1Color = Color(0xFFDA2DDD);
-
+  static const Color primaryColor = Color(0xFF2196F3);
+  static const Color secondaryColor = Color(0xFF64B5F6);
+  static const Color darkBackground = Color(0xFF1A1A1A);
+  static const Color lightBackground = Color(0xFFF5F5F5);
+  static const Color accentColor = Color(0xFFFF7A00);
+  static const Color dangerColor = Color(0xFFE53935);
+  static const Color successColor = Color(0xFF43A047);
   static const Color white = Colors.white;
   static const Color black = Colors.black;
-  static const Color grey = Colors.grey;
+  static const Color grey = Color(0xFF9E9E9E);
+  static const Color lightGrey = Color(0xFFE0E0E0);
+
+
   static const Color red = Colors.red;
   static const Color green = Colors.green;
   static const Color blue = Colors.blue;
@@ -26,6 +27,38 @@ class AppColors {
       stops: [0.0, 0.5],
       center: Alignment.center,
       radius: 1.5,
+    );
+  }
+
+  static LinearGradient getDarkGradient() {
+    return const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Color(0xFF1A1A1A), Color(0xFF2C2C2C)],
+    );
+  }
+
+  static LinearGradient getLightGradient() {
+    return const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Color(0xFFF5F5F5), Colors.white],
+    );
+  }
+
+  static LinearGradient getAccentGradient() {
+    return const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
+    );
+  }
+
+  static LinearGradient getDangerGradient() {
+    return const LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Color(0xFFE53935), Color(0xFFEF5350)],
     );
   }
 }

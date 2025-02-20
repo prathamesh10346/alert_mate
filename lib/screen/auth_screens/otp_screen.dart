@@ -120,7 +120,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
             Text(
               'OTP',
               style: TextStyle(
-                color: AppColors.lightWhiteColor.withOpacity(0.7),
+                color: AppColors.white.withOpacity(0.7),
                 fontSize: SizeConfig.blockSizeHorizontal * 4,
               ),
             ),
@@ -195,8 +195,8 @@ class _VerifyScreenState extends State<VerifyScreen> {
             'Resend',
             style: TextStyle(
               color: _remainingTime == 0
-                  ? AppColors.lightWhiteColor
-                  : AppColors.lightWhiteColor.withOpacity(0.7),
+                  ? AppColors.white
+                  : AppColors.white.withOpacity(0.7),
               fontSize: SizeConfig.blockSizeHorizontal * 4,
             ),
           ),
@@ -204,7 +204,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
         Text(
           '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
           style: TextStyle(
-            color: AppColors.lightWhiteColor.withOpacity(0.7),
+            color: AppColors.white.withOpacity(0.7),
             fontSize: SizeConfig.blockSizeHorizontal * 4,
           ),
         ),

@@ -1,5 +1,5 @@
 // women_safety_screen.dart
-import 'package:alert_mate/screen/fake_call_screen.dart';
+import 'package:alert_mate/screen/devies_details/fake_call_screen.dart';
 import 'package:alert_mate/services/audio_service.dart';
 import 'package:alert_mate/services/camera_service.dart';
 import 'package:alert_mate/services/email_service.dart';
@@ -362,100 +362,6 @@ class _WomenSafetyScreenState extends State<WomenSafetyScreen> {
       await _cameraService.dispose();
     }
   }
-
-  // Future<void> _activateSOS() async {
-  //   if (emergencyContacts.isEmpty) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Please add emergency contacts first')),
-  //     );
-  //     return;
-  //   }
-
-  //   try {
-  //     // Check permissions before activating SOS
-  //     // final audioPermissions = await _audioService.checkPermissions();
-  //     // if (!audioPermissions) {
-  //     //   // Show dialog to request permissions
-  //     //   final shouldOpenSettings = await showDialog<bool>(
-  //     //     context: context,
-  //     //     builder: (context) => AlertDialog(
-  //     //       title: Text('Permissions Required'),
-  //     //       content: Text(
-  //     //           'Audio recording permissions are needed for the SOS feature. Would you like to open settings to grant them?'),
-  //     //       actions: [
-  //     //         TextButton(
-  //     //           onPressed: () => Navigator.pop(context, false),
-  //     //           child: Text('Cancel'),
-  //     //         ),
-  //     //         TextButton(
-  //     //           onPressed: () => Navigator.pop(context, true),
-  //     //           child: Text('Open Settings'),
-  //     //         ),
-  //     //       ],
-  //     //     ),
-  //     //   );
-
-  //     //   if (shouldOpenSettings == true) {
-  //     //     await openAppSettings();
-  //     //     return;
-  //     //   } else {
-  //     //     // Proceed without audio recording
-  //     //     await _contactEmergencyServices([]);
-  //     //     return;
-  //     //   }
-  //     // }
-
-  //     setState(() => isSOSActive = true);
-
-  //     // Initialize services
-  //     // await _audioService.initialize();
-  //     // await _mediaService.initialize();
-
-  //     // // Start recording audio
-  //     // await _audioService.startRecording();
-
-  //     // Capture media
-  //     final mediaFiles = await _mediaService.startCapturing();
-
-  //     // // Stop audio recording
-  //     // final audioPath = await _audioService.stopRecording();
-  //     // if (audioPath != null) {
-  //     //   mediaFiles.add(audioPath);
-  //     // }
-
-  //     //  delay for 10 sec
-  //     await Future.delayed(const Duration(seconds: 10));
-  //     print(mediaFiles); // Contact emergency services
-  //     await _contactEmergencyServices(mediaFiles);
-
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text('Emergency contacts have been notified'),
-  //         duration: Duration(seconds: 3),
-  //       ),
-  //     );
-  //   } catch (e) {
-  //     print('Error during SOS activation: $e');
-  //     // Still try to contact emergency services without media
-  //     await _contactEmergencyServices([]);
-
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content:
-  //               Text('Emergency contacts notified (without media recording)'),
-  //           duration: Duration(seconds: 3),
-  //         ),
-  //       );
-  //     }
-  //   } finally {
-  //     try {
-  //       // await _audioService.stopRecording();
-  //     } catch (e) {
-  //       print('Error during cleanup: $e');
-  //     }
-  //   }
-  // }
 
   Future<void> _contactEmergencyServices(List<String> mediaFiles) async {
     final message = '''EMERGENCY: I need help! 

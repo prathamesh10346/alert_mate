@@ -1,26 +1,26 @@
 import 'dart:convert';
 
-import 'package:alert_mate/screen/AccidentDetectionScreen.dart';
-import 'package:alert_mate/screen/SimMonitorScreen.dart';
-import 'package:alert_mate/screen/anti_pocket_screen.dart';
-import 'package:alert_mate/screen/bluetooth_proximity_screen.dart';
-import 'package:alert_mate/screen/connectivity_lock_screen.dart';
-import 'package:alert_mate/screen/do_not_touch_screen.dart';
-import 'package:alert_mate/screen/geofencing_screen.dart';
-import 'package:alert_mate/screen/intruder_selfie_screen.dart';
-import 'package:alert_mate/screen/theft_mode_screen.dart';
-import 'package:alert_mate/screen/un_plug_protection.dart';
-import 'package:alert_mate/screen/vault_screen.dart';
-import 'package:alert_mate/screen/voice_command_screen.dart';
-import 'package:alert_mate/screen/women_safety_screen.dart';
+import 'package:alert_mate/screen/devies_details/AccidentDetectionScreen.dart';
+import 'package:alert_mate/screen/devies_details/SimMonitorScreen.dart';
+import 'package:alert_mate/screen/devies_details/anti_pocket_screen.dart';
+import 'package:alert_mate/screen/devies_details/bluetooth_proximity_screen.dart';
+import 'package:alert_mate/screen/devies_details/connectivity_lock_screen.dart';
+import 'package:alert_mate/screen/devies_details/do_not_touch_screen.dart';
+import 'package:alert_mate/screen/devies_details/geofencing_screen.dart';
+import 'package:alert_mate/screen/devies_details/intruder_selfie_screen.dart';
+import 'package:alert_mate/screen/devies_details/theft_mode_screen.dart';
+import 'package:alert_mate/screen/devies_details/un_plug_protection.dart';
+import 'package:alert_mate/screen/devies_details/vault_screen.dart';
+import 'package:alert_mate/screen/devies_details/voice_command_screen.dart';
+import 'package:alert_mate/screen/devies_details/women_safety_screen.dart';
 import 'package:alert_mate/services/bluetooth_proximity_service.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import '../services/device_info_service.dart';
-import '../services/location_service.dart';
-import '../services/wifi_service.dart';
-import '../services/phone_service.dart';
+import '../../services/device_info_service.dart';
+import '../../services/location_service.dart';
+import '../../services/wifi_service.dart';
+import '../../services/phone_service.dart';
 import 'call_logs_screen.dart';
 
 class DeviceDetailsScreen extends StatefulWidget {

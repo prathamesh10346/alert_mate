@@ -2,13 +2,209 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+class AccidentHotspot {
+  final String id;
+  final double latitude;
+  final double longitude;
+  final int accidentCount;
+  final String severity;
+  final DateTime lastAccident;
+
+  AccidentHotspot({
+    required this.id,
+    required this.latitude,
+    required this.longitude,
+    required this.accidentCount,
+    required this.severity,
+    required this.lastAccident,
+  });
+}
+
+class AccidentDetectionProvider with ChangeNotifier {
+  bool _isMonitoring = false;
+  Set<Marker> _accidentHotspots = {};
+  Position? _currentLocation;
+  Map<PolylineId, Polyline> _polylines = {};
+  List<AccidentHotspot> _hotspots = [];
+  StreamSubscription? _locationSubscription;
+
+  bool get isMonitoring => _isMonitoring;
+  Set<Marker> get accidentHotspots => _accidentHotspots;
+  Position? get currentLocation => _currentLocation;
+  Map<PolylineId, Polyline> get polylines => _polylines;
+
+  AccidentDetectionProvider() {
+    _generateRandomHotspots();
+  }
+  void _generateRandomHotspots() {
+    final Random random = Random();
+    final List<AccidentHotspot> randomHotspots = [];
+
+    // Pune coordinates in decimal format
+    // Converting from degrees°minutes'seconds" to decimal degrees
+    // 18°35'23.5"N 73°59'51.1"E => 18.589861, 73.997528
+    // 18°34'54.0"N 73°59'12.1"E => 18.581667, 73.986694
+
+    // Define Pune boundary coordinates
+    final double puneBoundaryMinLat = 18.481667; // South boundary
+    final double puneBoundaryMaxLat = 18.689861; // North boundary
+    final double puneBoundaryMinLng = 73.786694; // West boundary
+    final double puneBoundaryMaxLng = 74.097528; // East boundary
+
+    // Predefined known accident-prone areas in Pune
+    final List<Map<String, double>> knownHotspots = [
+      {'lat': 18.589861, 'lng': 73.997528}, // Hadapsar Junction
+      {'lat': 18.581667, 'lng': 73.986694}, // Magarpatta Road
+      {'lat': 18.520430, 'lng': 73.856744}, // Swargate
+      {'lat': 18.559652, 'lng': 73.779556}, // Hinjewadi Junction
+      {'lat': 18.515503, 'lng': 73.926070}, // Pune-Solapur Road
+    ];
+
+    // Add known hotspots first
+    for (int i = 0; i < knownHotspots.length; i++) {
+      final hotspot = AccidentHotspot(
+        id: 'known_hotspot_$i',
+        latitude: knownHotspots[i]['lat']!,
+        longitude: knownHotspots[i]['lng']!,
+        accidentCount:
+            random.nextInt(30) + 20, // Higher accident count for known spots
+        severity: 'High', // Known spots are marked as high severity
+        lastAccident:
+            DateTime.now().subtract(Duration(days: random.nextInt(30))),
+      );
+      randomHotspots.add(hotspot);
+    }
+
+    // Generate additional random hotspots
+    for (int i = 0; i < 8; i++) {
+      final double lat = puneBoundaryMinLat +
+          random.nextDouble() * (puneBoundaryMaxLat - puneBoundaryMinLat);
+      final double lng = puneBoundaryMinLng +
+          random.nextDouble() * (puneBoundaryMaxLng - puneBoundaryMinLng);
+
+      final hotspot = AccidentHotspot(
+        id: 'hotspot_$i',
+        latitude: lat,
+        longitude: lng,
+        accidentCount: random.nextInt(20) + 1,
+        severity: ['Low', 'Medium', 'High'][random.nextInt(2)],
+        lastAccident:
+            DateTime.now().subtract(Duration(days: random.nextInt(30))),
+      );
+
+      randomHotspots.add(hotspot);
+    }
+
+    _hotspots = randomHotspots;
+    _updateHotspotMarkers();
+  }
+
+  void toggleMonitoring(bool value) {
+    _isMonitoring = value;
+    if (_isMonitoring) {
+      _startLocationTracking();
+    } else {
+      _stopLocationTracking();
+    }
+    notifyListeners();
+  }
+
+  Future<void> _startLocationTracking() async {
+    final permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) return;
+
+    _locationSubscription = Geolocator.getPositionStream(
+      locationSettings: LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10,
+      ),
+    ).listen((Position position) {
+      updateCurrentLocation(position);
+      _checkNearbyHotspots(position);
+    });
+  }
+
+  void _stopLocationTracking() {
+    _locationSubscription?.cancel();
+  }
+
+  void updateCurrentLocation(Position position) {
+    _currentLocation = position;
+    notifyListeners();
+  }
+
+  void _checkNearbyHotspots(Position position) {
+    for (var hotspot in _hotspots) {
+      double distance = Geolocator.distanceBetween(
+        position.latitude,
+        position.longitude,
+        hotspot.latitude,
+        hotspot.longitude,
+      );
+
+      if (distance < 200) {
+        // Alert if within 200 meters
+        _showHotspotWarning(hotspot);
+      }
+    }
+  }
+
+  void _updateHotspotMarkers() {
+    _accidentHotspots.clear();
+    for (var hotspot in _hotspots) {
+      final BitmapDescriptor markerColor;
+      switch (hotspot.severity.toLowerCase()) {
+        case 'high':
+          markerColor =
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+          break;
+        case 'medium':
+          markerColor =
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange);
+          break;
+        default:
+          markerColor =
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueYellow);
+      }
+
+      _accidentHotspots.add(
+        Marker(
+          markerId: MarkerId(hotspot.id),
+          position: LatLng(hotspot.latitude, hotspot.longitude),
+          icon: markerColor,
+          infoWindow: InfoWindow(
+            title: 'Accident Hotspot - ${hotspot.severity} Risk',
+            snippet: '${hotspot.accidentCount} accidents recorded',
+          ),
+        ),
+      );
+    }
+    notifyListeners();
+  }
+
+  void _showHotspotWarning(AccidentHotspot hotspot) {
+    // This will be implemented in the UI layer
+    // You can create a callback or use a stream to notify the UI
+    print(
+        'Warning: Approaching accident hotspot with ${hotspot.severity} risk level');
+  }
+
+  @override
+  void dispose() {
+    _stopLocationTracking();
+    super.dispose();
+  }
+}
+
 class AccidentDetectionService {
   // Thresholds for accident detection
-  static const double ACCELERATION_THRESHOLD =40.0; // ~3G force
+  static const double ACCELERATION_THRESHOLD = 40.0; // ~3G force
   static const double SUSTAINED_ACCELERATION_THRESHOLD = 20.0; // ~1.5G force
   static const double ANGULAR_VELOCITY_THRESHOLD = 7.0; // rad/s
   static const double SPEED_THRESHOLD = 20.0; // m/s (~18 km/h minimum speed)

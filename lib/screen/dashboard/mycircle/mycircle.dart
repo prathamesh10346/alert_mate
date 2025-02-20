@@ -1,6 +1,9 @@
+import 'package:alert_mate/models/contact.dart';
+import 'package:alert_mate/providers/contacts_provider.dart';
 import 'package:alert_mate/screen/dashboard/mycircle/add_contact_screen.dart';
 import 'package:alert_mate/utils/size_config.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class MyCircleScreen extends StatefulWidget {
   @override
@@ -10,49 +13,93 @@ class MyCircleScreen extends StatefulWidget {
 class _MyCircleScreenState extends State<MyCircleScreen> {
   bool _isDetailView = false;
   String _selectedCircle = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ContactsProvider>(context, listen: false).loadContacts();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return _isDetailView ? _buildDetailView() : _buildMainView();
+    return Consumer<ContactsProvider>(
+      builder: (context, contactsProvider, child) {
+        return _isDetailView
+            ? _buildDetailView(contactsProvider, context)
+            : _buildMainView(contactsProvider);
+      },
+    );
   }
 
-  Widget _buildMainView() {
+  Widget _buildMainView(ContactsProvider contactsProvider) {
+    final circles = contactsProvider.circles;
+
     return Column(
       children: [
-        _buildHeader('Emergency circle', false),
+        _buildHeader('Emergency Circles', false),
         _buildSearchBar(),
         Expanded(
-          child: ListView(
-            children: [
-              _buildCircleItem('General', '2 Contacts', Colors.green),
-              _buildCircleItem('Family', '5 Contacts', Colors.blue),
-              _buildCircleItem('Relatives', '6 Contacts', Colors.orange),
-              _buildCircleItem('Relatives 1', '2 Contacts', Colors.purple),
-            ],
+          child: ListView.builder(
+            itemCount: circles.length,
+            itemBuilder: (context, index) {
+              final circle = circles[index];
+              final contactCount =
+                  contactsProvider.getContactCountByCircle(circle);
+              return _buildCircleItem(
+                circle,
+                '$contactCount Contacts',
+                _getCircleColor(circle),
+                onTap: () {
+                  setState(() {
+                    _isDetailView = true;
+                    _selectedCircle = circle;
+                  });
+                },
+              );
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDetailView() {
+  Widget _buildDetailView(
+      ContactsProvider contactsProvider, BuildContext context) {
+    final contacts = contactsProvider.getContactsByCircle(_selectedCircle);
+
     return Column(
       children: [
-        _buildHeader(_selectedCircle, false),
+        _buildHeader(_selectedCircle, true),
         _buildSearchBar(),
         Expanded(
-          child: ListView(
-            children: [
-              _buildContactItem('Dad'),
-              _buildContactItem('Sister'),
-              _buildContactItem('George Thomas'),
-              _buildContactItem('Naina alvas'),
-              _buildContactItem('Albin'),
-            ],
+          child: ListView.builder(
+            itemCount: contacts.length,
+            itemBuilder: (context, index) {
+              final contact = contacts[index];
+              return _buildContactItem(contact);
+            },
           ),
         ),
       ],
     );
+  }
+
+  Color _getCircleColor(String circle) {
+    switch (circle) {
+      case 'Family':
+        return Colors.blue;
+      case 'General':
+        return Colors.green;
+      case 'Relatives':
+        return Colors.orange;
+      case 'Friends':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
   }
 
   Widget _buildHeader(String title, bool isMainView) {
@@ -121,14 +168,10 @@ class _MyCircleScreenState extends State<MyCircleScreen> {
     );
   }
 
-  Widget _buildCircleItem(String name, String contacts, Color color) {
+  Widget _buildCircleItem(String name, String contacts, Color color,
+      {required Null Function() onTap}) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _isDetailView = true;
-          _selectedCircle = name;
-        });
-      },
+      onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
         child: Row(
@@ -167,7 +210,7 @@ class _MyCircleScreenState extends State<MyCircleScreen> {
     );
   }
 
-  Widget _buildContactItem(String name) {
+  Widget _buildContactItem(Contact contact) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
       child: Row(
@@ -178,7 +221,7 @@ class _MyCircleScreenState extends State<MyCircleScreen> {
                 const AssetImage('assets/images/placeholder_avatar.png'),
           ),
           SizedBox(width: 4.w),
-          Text(name, style: TextStyle(fontSize: 4.5.w)),
+          Text(contact.name, style: TextStyle(fontSize: 4.5.w)),
         ],
       ),
     );
