@@ -1,5 +1,6 @@
 import 'package:alert_mate/models/contact.dart';
 import 'package:alert_mate/providers/contacts_provider.dart';
+import 'package:alert_mate/screen/dashboard/main_screen.dart';
 import 'package:alert_mate/screen/dashboard/mycircle/add_contact_screen.dart';
 import 'package:alert_mate/utils/size_config.dart';
 import 'package:flutter/material.dart';
@@ -25,12 +26,19 @@ class _MyCircleScreenState extends State<MyCircleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ContactsProvider>(
-      builder: (context, contactsProvider, child) {
-        return _isDetailView
-            ? _buildDetailView(contactsProvider, context)
-            : _buildMainView(contactsProvider);
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => MainScreen()));
+        return true;
       },
+      child: Consumer<ContactsProvider>(
+        builder: (context, contactsProvider, child) {
+          return _isDetailView
+              ? _buildDetailView(contactsProvider, context)
+              : _buildMainView(contactsProvider);
+        },
+      ),
     );
   }
 

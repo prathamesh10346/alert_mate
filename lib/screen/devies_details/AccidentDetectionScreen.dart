@@ -8,13 +8,15 @@ import 'package:alert_mate/services/phone_service.dart';
 import 'package:alert_mate/services/sms_service.dart';
 import 'package:alert_mate/utils/app_color.dart';
 import 'package:alert_mate/utils/size_config.dart';
+import 'package:alert_mate/widgets/circular_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
-import '../../services/accident_detection_service.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../services/accident_detection_service.dart';
 
 class AccidentDetectionScreen extends StatefulWidget {
   @override
@@ -85,55 +87,101 @@ class _AccidentDetectionScreenState extends State<AccidentDetectionScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) {
+        // Animation controller setup
+        final controller = AnimationController(
+          duration: const Duration(seconds: 30),
+          vsync: Navigator.of(context),
+        );
+        final animation = Tween<double>(
+          begin: 1.0,
+          end: 0.0,
+        ).animate(controller);
+        controller.forward();
+
+        // Set up TTS
+        final flutterTts = FlutterTts();
+        var ttsCount = 0;
+        Timer(const Duration(seconds: 10), () async {
+          if (ttsCount < 2) {
+            await flutterTts.setLanguage("en-US");
+            await flutterTts.speak("Are you okay? Respond with yes or no");
+            ttsCount++;
+            Timer(const Duration(seconds: 3), () async {
+              if (ttsCount < 2) {
+                await flutterTts.speak("Are you okay? Respond with yes or no");
+                ttsCount++;
+              }
+            });
+          }
+        });
+
         _emergencyTimer = Timer(Duration(seconds: 30), () {
           Navigator.of(context).pop(); // Close dialog
           _contactEmergencyServices(accidentData, contacts);
         });
 
-        return AlertDialog(
-          backgroundColor: Colors.grey[900],
-          title: Text(
-            'Accident Detected!',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Are you okay? Emergency services will be contacted in 30 seconds if no response.',
-                style: TextStyle(color: Colors.white),
-              ),
-              SizedBox(height: 10),
-              Text(
-                'Reason: ${accidentData.reason}',
-                style: TextStyle(color: Colors.white),
-              ),
-              Text(
-                'Impact Force: ${accidentData.acceleration.toStringAsFixed(2)} m/s²',
-                style: TextStyle(color: Colors.white),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                _emergencyTimer?.cancel();
-                _isDialogShowing = false;
-                Navigator.pop(context);
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            AnimatedBuilder(
+              animation: animation,
+              builder: (context, child) {
+                return CustomPaint(
+                  size: const Size(400, 400),
+                  painter: CircularTimerPainter(
+                    progress: animation.value,
+                    backgroundColor: Colors.grey[800]!,
+                    progressColor: Colors.red,
+                  ),
+                );
               },
-              child: Text('I\'m OK'),
             ),
-            TextButton(
-              onPressed: () {
-                _emergencyTimer?.cancel();
-                Navigator.pop(context);
-                _contactEmergencyServices(accidentData, contacts);
-              },
-              child: Text(
-                'Get Help Now',
-                style: TextStyle(color: Colors.red),
+            AlertDialog(
+              backgroundColor: Colors.grey[900],
+              title: Text(
+                'Accident Detected!',
+                style: TextStyle(color: Colors.white),
               ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Are you okay? Emergency services will be contacted in 30 seconds if no response.',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'Reason: ${accidentData.reason}',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  Text(
+                    'Impact Force: ${accidentData.acceleration.toStringAsFixed(2)} m/s²',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    _emergencyTimer?.cancel();
+                    _isDialogShowing = false;
+                    Navigator.pop(context);
+                  },
+                  child: Text('I\'m OK'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _emergencyTimer?.cancel();
+                    Navigator.pop(context);
+                    _contactEmergencyServices(accidentData, contacts);
+                  },
+                  child: Text(
+                    'Get Help Now',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
             ),
           ],
         );
@@ -246,7 +294,7 @@ class _AccidentDetectionScreenState extends State<AccidentDetectionScreen> {
             _controller.complete(controller);
             _mapController = controller;
           },
-          myLocationEnabled: true, 
+          myLocationEnabled: true,
           myLocationButtonEnabled: true,
         ),
         Positioned(top: 400, right: 0, left: 0, child: _buildHotspotsList()),
