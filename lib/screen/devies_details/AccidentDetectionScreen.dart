@@ -18,6 +18,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/accident_detection_service.dart';
 
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+
 class AccidentDetectionScreen extends StatefulWidget {
   @override
   _AccidentDetectionScreenState createState() =>
@@ -37,6 +41,7 @@ class _AccidentDetectionScreenState extends State<AccidentDetectionScreen> {
   @override
   void initState() {
     super.initState();
+    speech = stt.SpeechToText();
     _initializeLocation();
     _initializeService();
     _accidentProvider =
@@ -88,36 +93,41 @@ class _AccidentDetectionScreenState extends State<AccidentDetectionScreen> {
       barrierDismissible: false,
       builder: (context) {
         // Animation controller setup
-        final controller = AnimationController(
+        final dialogController = AnimationController(
           duration: const Duration(seconds: 30),
           vsync: Navigator.of(context),
         );
         final animation = Tween<double>(
           begin: 1.0,
           end: 0.0,
-        ).animate(controller);
-        controller.forward();
+        ).animate(dialogController);
+        dialogController.forward();
 
         // Set up TTS
-        final flutterTts = FlutterTts();
         var ttsCount = 0;
         Timer(const Duration(seconds: 10), () async {
-          if (ttsCount < 2) {
+          if (ttsCount < 1) {
             await flutterTts.setLanguage("en-US");
-            await flutterTts.speak("Are you okay? Respond with yes or no");
+            await speakAndListen(
+                "Are you okay? Respond with yes or no", accidentData);
             ttsCount++;
             Timer(const Duration(seconds: 3), () async {
-              if (ttsCount < 2) {
-                await flutterTts.speak("Are you okay? Respond with yes or no");
+              if (ttsCount < 1) {
+                await speakAndListen(
+                    "Are you okay? Respond with yes or no", accidentData);
                 ttsCount++;
               }
             });
           }
         });
 
-        _emergencyTimer = Timer(Duration(seconds: 30), () {
-          Navigator.of(context).pop(); // Close dialog
-          _contactEmergencyServices(accidentData, contacts);
+        // Initialize speech recognition
+        requestMicrophonePermission().then((granted) {
+          if (granted) {
+            checkSpeechRecognitionAvailability();
+          } else {
+            print('Microphone permission denied');
+          }
         });
 
         return Stack(
@@ -151,28 +161,19 @@ class _AccidentDetectionScreenState extends State<AccidentDetectionScreen> {
                     style: TextStyle(color: Colors.white),
                   ),
                   SizedBox(height: 10),
-                  Text(
-                    'Reason: ${accidentData.reason}',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  Text(
-                    'Impact Force: ${accidentData.acceleration.toStringAsFixed(2)} m/s²',
-                    style: TextStyle(color: Colors.white),
-                  ),
                 ],
               ),
               actions: [
                 TextButton(
                   onPressed: () {
-                    _emergencyTimer?.cancel();
-                    _isDialogShowing = false;
+                    stopListening();
                     Navigator.pop(context);
                   },
                   child: Text('I\'m OK'),
                 ),
                 TextButton(
                   onPressed: () {
-                    _emergencyTimer?.cancel();
+                    stopListening();
                     Navigator.pop(context);
                     _contactEmergencyServices(accidentData, contacts);
                   },
@@ -190,6 +191,91 @@ class _AccidentDetectionScreenState extends State<AccidentDetectionScreen> {
       _isDialogShowing = false;
       _emergencyTimer?.cancel();
     });
+  }
+
+  Future<bool> requestMicrophonePermission() async {
+    var permissionStatus = await Permission.microphone.status;
+    if (!permissionStatus.isGranted) {
+      var result = await Permission.microphone.request();
+      return result.isGranted;
+    } else {
+      return true;
+    }
+  }
+
+  final FlutterTts flutterTts = FlutterTts();
+  late stt.SpeechToText speech;
+  bool isListening = false;
+  String lastWords = '';
+  void checkSpeechRecognitionAvailability() async {
+    bool available = await speech.initialize(
+      onError: (error) {
+        print('Speech recognition error: $error');
+      },
+      onStatus: (status) {
+        print('Speech recognition status: $status');
+      },
+    );
+    if (available) {
+      print('Speech recognition available');
+    } else {
+      print('Speech recognition not available');
+    }
+  }
+
+  void startListening(AccidentData accidentData, List<Contact> contacts) {
+    print("Listening....");
+
+    if (!isListening) {
+      lastWords = '';
+      speech.listen(
+        onResult: (result) {
+          setState(() {
+            lastWords = result.recognizedWords;
+            print('Recognized words: $lastWords');
+            if (lastWords.toLowerCase().contains('yes')) {
+              stopListening();
+              Navigator.pop(context);
+            } else if (lastWords.toLowerCase().contains('no')) {
+              stopListening();
+              _contactEmergencyServices(accidentData, contacts);
+              Navigator.pop(context);
+            }
+          });
+        },
+        listenFor: const Duration(seconds: 20), // Set to listen for 20 seconds
+        pauseFor: const Duration(seconds: 5),
+        partialResults: true,
+        localeId: 'en_US',
+        onSoundLevelChange: (level) {
+          print('Sound level: $level');
+        },
+        cancelOnError: true,
+      );
+      setState(() => isListening = true);
+    }
+  }
+
+  void stopListening() {
+    if (isListening) {
+      speech.stop();
+      setState(() => isListening = false);
+    }
+  }
+
+  Future<void> speakAndListen(String text, AccidentData accidentData) async {
+    await flutterTts.setLanguage("en-US");
+
+    // Set up the completion handler to start listening after TTS completes
+    flutterTts.setCompletionHandler(() {
+      startListening(
+        accidentData,
+        Provider.of<ContactsProvider>(context, listen: false).contacts,
+      );
+    });
+
+    // Speak the text
+    await flutterTts.speak(text);
   }
 
   Future<void> _contactEmergencyServices(

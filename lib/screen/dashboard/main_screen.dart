@@ -3,6 +3,7 @@ import 'package:alert_mate/providers/theme_provider.dart';
 import 'package:alert_mate/screen/dashboard/mycircle/mycircle.dart';
 import 'package:alert_mate/screen/dashboard/setting_screen.dart';
 import 'package:alert_mate/screen/devies_details/AccidentDetectionScreen.dart';
+import 'package:alert_mate/screen/devies_details/geofencing_screen.dart';
 import 'package:alert_mate/screen/devies_details/women_safety_screen.dart';
 import 'package:alert_mate/screen/services/AccidentEmergencyScreen.dart';
 import 'package:alert_mate/screen/services/FireEmergencyScreen.dart';
@@ -722,10 +723,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         screen = WomenSafetyScreen();
         break;
       case 'Rescue':
-        screen = RescueEmergencyScreen();
+        screen = GeofencingScreen();
         break;
       default:
-        screen = MedicalFacilitiesScreen();
+        screen = GeofencingScreen();
     }
 
     Navigator.push(
