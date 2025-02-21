@@ -79,6 +79,10 @@ dependencies:
   flutter_polyline_points: ^2.1.0
   google_place_plus: ^1.0.0
   flutter_tts: ^4.2.2
+  flutter_dotenv: ^5.2.1
+  tflite_flutter: ^0.11.0
+  audio_streamer: ^4.1.1
+  record: ^5.2.1
 
 
 dev_dependencies:
@@ -123,7 +127,9 @@ flutter:
     - assets/images/
     - assets/svg/
     - assets/lottie/
-
+    - .env
+    - assets/model/soundclassifier_with_metadata.tflite
+    - assets/model/labels.txt
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 

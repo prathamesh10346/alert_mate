@@ -3,4 +3,5 @@
     <string name="app_name">Device Details</string>
     <string name="device_admin_description">Required for device security features</string>
     <string name="accessibility_service_description">Required for device protection features</string>
+    <string name="GOOGLE_MAPS_API_KEY">AIzaSyBUeWZFAYZr5rUEh-SwQJ0_5qC7JGSJBX4</string>
 </resources>

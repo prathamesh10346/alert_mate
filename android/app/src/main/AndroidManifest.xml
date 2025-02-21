@@ -52,13 +52,14 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <!-- For devices running Android 10 (API level 29) and above -->
     <uses-permission android:name="android.permission.READ_PRECISE_PHONE_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="alert_mate"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
                 <meta-data
          android:name="com.google.android.geo.API_KEY"
-                    android:value="AIzaSyCh05PaJJGDZFiqL_hsSi0KcCkw4W6rBI0"/>
+                   android:value="@string/GOOGLE_MAPS_API_KEY"/>
         <provider
     android:name="androidx.core.content.FileProvider"
     android:authorities="${applicationId}.provider"
