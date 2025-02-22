@@ -83,6 +83,7 @@ dependencies:
   tflite_flutter: ^0.11.0
   audio_streamer: ^4.1.1
   record: ^5.2.1
+  fftea: ^1.5.0+1
 
 
 dev_dependencies:

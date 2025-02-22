@@ -37,9 +37,6 @@ class _EmergencyContactScreenState extends State<EmergencyContactScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: AppColors.radialGradient,
-        ),
         child: SafeArea(
           child: SingleChildScrollView(
             child: Padding(

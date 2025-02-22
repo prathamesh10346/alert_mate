@@ -8,8 +8,10 @@ import 'package:alert_mate/services/phone_service.dart';
 import 'package:alert_mate/services/sms_service.dart';
 import 'package:alert_mate/utils/app_color.dart';
 import 'package:alert_mate/utils/size_config.dart';
+import 'package:alert_mate/widgets/EmergencyDialog.dart';
 import 'package:alert_mate/widgets/circular_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -74,122 +76,132 @@ class _AccidentDetectionScreenState extends State<AccidentDetectionScreen> {
   }
 
   void _handleAccidentDetection(AccidentData accidentData) async {
-    if (_isDialogShowing) return; // Prevent multiple dialogs
+    if (_isDialogShowing) return;
 
     setState(() {
       _lastAccidentData = accidentData;
       _isDialogShowing = true;
     });
 
-    // Cancel any existing emergency timer
-    _emergencyTimer?.cancel();
-
     final contacts =
         Provider.of<ContactsProvider>(context, listen: false).contacts;
 
-    // Show alert dialog
-    await showDialog(
+    // Initial haptic feedback
+    HapticFeedback.heavyImpact();
+
+    // Initialize TTS with slower speech rate
+    FlutterTts flutterTts = FlutterTts();
+    await flutterTts.setLanguage("en-US");
+    await flutterTts.setSpeechRate(0.4); // Slower speech rate
+    await flutterTts.setVolume(1.0);
+    await flutterTts.setPitch(1.0);
+
+    bool voiceResponseReceived = false;
+    bool emergencyTriggered = false;
+    Timer(const Duration(seconds: 10), () async {
+      if (!voiceResponseReceived && _isDialogShowing) {
+        // Set up the completion handler BEFORE speaking
+        flutterTts.setCompletionHandler(() async {
+          print("TTS finished, now starting to listen");
+
+          // Make sure speech is initialized before using it
+          if (!speech.isAvailable) {
+            bool available = await speech.initialize(
+              onError: (error) => print('Speech recognition error: $error'),
+              onStatus: (status) => print('Speech recognition status: $status'),
+            );
+            if (!available) {
+              print('Unable to initialize speech recognition');
+              return;
+            }
+          }
+
+          // Now start listening after TTS is complete
+          speech.listen(
+            onResult: (result) {
+              String response = result.recognizedWords.toLowerCase();
+              print("Recognized: $response");
+
+              if (!voiceResponseReceived) {
+                // Check for positive responses
+                if (response.contains('yes') ||
+                    response.contains('okay') ||
+                    response.contains('fine') ||
+                    response.contains("i'm ok")) {
+                  voiceResponseReceived = true;
+                  speech.stop();
+                  if (Navigator.canPop(context)) {
+                    Navigator.of(context).pop();
+                  }
+                  return;
+                }
+
+                // Check for negative responses
+                if (response.contains('no') ||
+                    response.contains('help') ||
+                    response.contains('emergency') ||
+                    response.contains('not okay')) {
+                  voiceResponseReceived = true;
+                  emergencyTriggered = true;
+                  speech.stop();
+                  if (Navigator.canPop(context)) {
+                    Navigator.of(context).pop();
+                  }
+                  _contactEmergencyServices(accidentData, contacts);
+                  return;
+                }
+              }
+            },
+            listenFor: Duration(seconds: 20),
+            pauseFor: Duration(seconds: 3),
+            partialResults: true,
+            cancelOnError: true,
+            listenMode: stt.ListenMode.confirmation,
+          );
+        });
+
+        // Now speak the prompt
+        await flutterTts.speak(
+            "Are you okay? Please respond with yes if you're safe, or say help if you need assistance.");
+      }
+    });
+    // Show emergency dialog
+    await showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
-        // Animation controller setup
-        final dialogController = AnimationController(
-          duration: const Duration(seconds: 30),
-          vsync: Navigator.of(context),
-        );
-        final animation = Tween<double>(
-          begin: 1.0,
-          end: 0.0,
-        ).animate(dialogController);
-        dialogController.forward();
-
-        // Set up TTS
-        var ttsCount = 0;
-        Timer(const Duration(seconds: 10), () async {
-          if (ttsCount < 1) {
-            await flutterTts.setLanguage("en-US");
-            await speakAndListen(
-                "Are you okay? Respond with yes or no", accidentData);
-            ttsCount++;
-            Timer(const Duration(seconds: 3), () async {
-              if (ttsCount < 1) {
-                await speakAndListen(
-                    "Are you okay? Respond with yes or no", accidentData);
-                ttsCount++;
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return WillPopScope(
+          onWillPop: () async => false, // Prevent back button
+          child: EmergencyDialog(
+            onOkPressed: () {
+              voiceResponseReceived = true;
+              speech.stop();
+              Navigator.of(context).pop();
+            },
+            onEmergencyPressed: () {
+              voiceResponseReceived = true;
+              emergencyTriggered = true;
+              speech.stop();
+              Navigator.of(context).pop();
+              _contactEmergencyServices(accidentData, contacts);
+            },
+            onTimeExpired: () {
+              if (!voiceResponseReceived && !emergencyTriggered) {
+                emergencyTriggered = true;
+                speech.stop();
+                Navigator.of(context).pop();
+                _contactEmergencyServices(accidentData, contacts);
               }
-            });
-          }
-        });
-
-        // Initialize speech recognition
-        requestMicrophonePermission().then((granted) {
-          if (granted) {
-            checkSpeechRecognitionAvailability();
-          } else {
-            print('Microphone permission denied');
-          }
-        });
-
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            AnimatedBuilder(
-              animation: animation,
-              builder: (context, child) {
-                return CustomPaint(
-                  size: const Size(400, 400),
-                  painter: CircularTimerPainter(
-                    progress: animation.value,
-                    backgroundColor: Colors.grey[800]!,
-                    progressColor: Colors.red,
-                  ),
-                );
-              },
-            ),
-            AlertDialog(
-              backgroundColor: Colors.grey[900],
-              title: Text(
-                'Accident Detected!',
-                style: TextStyle(color: Colors.white),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Are you okay? Emergency services will be contacted in 30 seconds if no response.',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  SizedBox(height: 10),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    stopListening();
-                    Navigator.pop(context);
-                  },
-                  child: Text('I\'m OK'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    stopListening();
-                    Navigator.pop(context);
-                    _contactEmergencyServices(accidentData, contacts);
-                  },
-                  child: Text(
-                    'Get Help Now',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            },
+            totalSeconds: 30,
+          ),
         );
       },
     ).then((_) {
       _isDialogShowing = false;
-      _emergencyTimer?.cancel();
+      speech.stop();
     });
   }
 
@@ -235,11 +247,16 @@ class _AccidentDetectionScreenState extends State<AccidentDetectionScreen> {
             print('Recognized words: $lastWords');
             if (lastWords.toLowerCase().contains('yes')) {
               stopListening();
-              Navigator.pop(context);
-            } else if (lastWords.toLowerCase().contains('no')) {
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
+            } else if (lastWords.toLowerCase().contains('no') ||
+                lastWords.toLowerCase().contains('help')) {
               stopListening();
               _contactEmergencyServices(accidentData, contacts);
-              Navigator.pop(context);
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              }
             }
           });
         },

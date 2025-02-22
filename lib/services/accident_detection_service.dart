@@ -203,6 +203,7 @@ class AccidentDetectionProvider with ChangeNotifier {
 }
 
 class AccidentDetectionService {
+  
   // Thresholds for accident detection
   static const double ACCELERATION_THRESHOLD = 40.0; // ~3G force
   static const double SUSTAINED_ACCELERATION_THRESHOLD = 20.0; // ~1.5G force

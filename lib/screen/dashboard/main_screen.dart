@@ -390,64 +390,67 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Center(
       child: GestureDetector(
         onTap: () async {
-          try {
-            setState(() {
-              _isEmergency = !_isEmergency;
-            });
+        try {
+          setState(() {
+            _isEmergency = !_isEmergency;
+          });
 
-            if (_isEmergency) {
-              // Start animations
-              _sosAnimationController.repeat(reverse: true);
+          if (_isEmergency) {
+            // Start animations
+            _sosAnimationController.repeat(reverse: true);
 
-              // Check for emergency contacts
-              final contacts = await _sosService.getEmergencyContacts();
-              if (contacts.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text(
-                          'Please add emergency contacts in settings first')),
-                );
-                setState(() => _isEmergency = false);
-                return;
-              }
+            // Set context on the SOS service
+            _sosService.setContext(context);
 
-              // Activate SOS if we have the current position
-              if (_currentPosition != null) {
-                await _sosService.activateSOS(_currentPosition!);
-
-                // Show confirmation to user
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text(
-                          'SOS activated! Emergency contacts will be notified.')),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Waiting for location data...')),
-                );
-              }
-            } else {
-              // Deactivate SOS
-              _sosService.deactivateSOS();
-              _sosAnimationController.reset();
-              _sosAnimationController.stop();
-
+            // Check for emergency contacts
+            final contacts = await _sosService.getEmergencyContacts();
+            if (contacts.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('SOS deactivated')),
+                SnackBar(
+                    content: Text(
+                        'Please add emergency contacts in settings first')),
               );
+              setState(() => _isEmergency = false);
+              return;
             }
 
-            // Haptic feedback
-            HapticFeedback.heavyImpact();
-          } catch (e) {
-            print('Error in SOS activation: $e');
-            setState(() => _isEmergency = false);
+            // Activate SOS if we have the current position
+            if (_currentPosition != null) {
+              await _sosService.activateSOS(_currentPosition!);
+
+              // Show confirmation to user
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text(
+                        'SOS activated! Emergency contacts will be notified.')),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Waiting for location data...')),
+              );
+            }
+          } else {
+            // Deactivate SOS
+            _sosService.deactivateSOS();
+            _sosAnimationController.reset();
+            _sosAnimationController.stop();
+
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text('Error activating SOS. Please try again.')),
+              SnackBar(content: Text('SOS deactivated')),
             );
           }
-        },
+
+          // Haptic feedback
+          HapticFeedback.heavyImpact();
+        } catch (e) {
+          print('Error in SOS activation: $e');
+          setState(() => _isEmergency = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Error activating SOS. Please try again.')),
+          );
+        }
+      },
         child: AnimatedBuilder(
           animation: _sosAnimationController,
           builder: (context, child) {

@@ -1,10 +1,14 @@
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geolocator/geolocator.dart';
 import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:alert_mate/services/sms_service.dart';
 import 'package:alert_mate/services/email_service.dart';
 import 'package:alert_mate/services/camera_service.dart';
 import 'package:alert_mate/services/audio_service.dart';
+import 'package:alert_mate/providers/contacts_provider.dart';
+import 'package:alert_mate/models/contact.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SOSService {
   final AudioService _audioService = AudioService();
@@ -12,13 +16,62 @@ class SOSService {
   Timer? _sosTimer;
   List<String> _capturedMedia = [];
   Position? _currentPosition;
+  BuildContext? _context;
+
+  // Default constructor without context for backward compatibility
+  SOSService();
+
+  // Method to set context when available
+  void setContext(BuildContext context) {
+    _context = context;
+  }
 
   Future<List<String>> getEmergencyContacts() async {
+    if (_context != null) {
+      try {
+        // Get contacts from provider if context is available
+        final contactsProvider =
+            Provider.of<ContactsProvider>(_context!, listen: false);
+        await contactsProvider.loadContacts();
+
+        // Convert contacts to phone numbers
+        return contactsProvider.contacts
+            .where((contact) => contact.phoneNumber.isNotEmpty)
+            .map((contact) => contact.phoneNumber)
+            .toList();
+      } catch (e) {
+        print('Error getting contacts from provider: $e');
+        // Fall back to shared preferences if provider fails
+      }
+    }
+
+    // Fallback to the original implementation
     final prefs = await SharedPreferences.getInstance();
     return prefs.getStringList('emergency_contacts') ?? [];
   }
 
   Future<String?> getEmergencyEmail() async {
+    if (_context != null) {
+      try {
+        // Get contacts from provider if context is available
+        final contactsProvider =
+            Provider.of<ContactsProvider>(_context!, listen: false);
+        await contactsProvider.loadContacts();
+
+        // Get emails from contacts
+        final emails = contactsProvider.contacts
+            .where((contact) => contact.email.isNotEmpty)
+            .map((contact) => contact.email)
+            .toList();
+
+        return emails.isNotEmpty ? emails.first : null;
+      } catch (e) {
+        print('Error getting emails from provider: $e');
+        // Fall back to shared preferences if provider fails
+      }
+    }
+
+    // Fallback to the original implementation
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('emergency_email');
   }
@@ -59,7 +112,7 @@ class SOSService {
       List<String> contacts, String? email) async {
     if (_currentPosition == null) return;
 
-    final message = '''EMERGENCY: I need help! 
+    final message = '''EMERGENCY: I need help!
 Location: https://www.google.com/maps?q=${_currentPosition!.latitude},${_currentPosition!.longitude}
 Time: ${DateTime.now().toString()}''';
 
