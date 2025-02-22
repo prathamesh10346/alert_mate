@@ -13,7 +13,7 @@ class GeofencingService {
   static List<GeoFence> geofences = [
     GeoFence(
       id: '1',
-      name: 'Home Zone',
+name: 'Home Zone',
       latitude: 18.84995,
       longitude: 73.58298,
       radius: 500,
