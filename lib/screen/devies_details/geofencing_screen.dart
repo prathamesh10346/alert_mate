@@ -119,9 +119,14 @@ class _GeofencingScreenState extends State<GeofencingScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        leading: Icon(
-          Icons.arrow_back,
-          color: Colors.white,
+        leading: InkWell(
+          onTap: () {
+            Navigator.pop(context);
+          },
+          child: Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
         ),
         title: Text(
           'Geo-Fencing Monitor',

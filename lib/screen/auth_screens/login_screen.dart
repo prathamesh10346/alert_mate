@@ -1,7 +1,9 @@
+import 'package:alert_mate/providers/auth_service.dart';
 import 'package:alert_mate/screen/auth_screens/load_screen.dart';
 import 'package:alert_mate/utils/app_color.dart';
 import 'package:alert_mate/utils/size_config.dart';
 import 'package:alert_mate/widgets/custom_button.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -13,6 +15,26 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late TextEditingController _controller;
   bool _isValidNumber = true;
+  final AuthService _authService = AuthService();
+
+  // Add this method to handle Google Sign-In
+  Future<void> _handleGoogleSignIn() async {
+    final UserCredential? result = await _authService.signInWithGoogle();
+    if (result != null) {
+      // Get user profile data
+      final User? user = result.user;
+      final String? photoUrl = user?.photoURL;
+      final String? displayName = user?.displayName;
+      final String? email = user?.email;
+
+      // Navigate to home screen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => HomeLoadingScreen(),
+        ),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -154,6 +176,40 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 2.h),
+
+                    // Add Google Sign-In button
+                    CustomPaint(
+                      painter: GradientBorderPainter(),
+                      child: InkWell(
+                        onTap: _handleGoogleSignIn,
+                        child: Container(
+                          height: 5.8.h,
+                          padding: EdgeInsets.symmetric(horizontal: 2.w),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/images/googlr.png',
+                                height: 24,
+                              ),
+                              SizedBox(width: 2.w),
+                              Text(
+                                'Sign in with Google',
+                                style: TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 4.w,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

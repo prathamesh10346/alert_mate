@@ -5,6 +5,7 @@ import 'package:alert_mate/providers/theme_provider.dart';
 import 'package:alert_mate/screen/Splash_screen/splash_screen.dart';
 import 'package:alert_mate/screen/dashboard/main_screen.dart';
 import 'package:alert_mate/services/accident_detection_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -15,7 +16,7 @@ Future<void> main() async {
   } catch (e) {
     print("Error loading .env file: $e");
   }
-
+  await Firebase.initializeApp();
   // Removed the call to initializeAllPlugins as it does not exist
   WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());

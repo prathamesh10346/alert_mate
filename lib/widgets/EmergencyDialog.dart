@@ -145,7 +145,6 @@ class _EmergencyDialogState extends State<EmergencyDialog>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Progress bar
-                
 
                       // Content
                       Padding(
@@ -182,7 +181,7 @@ class _EmergencyDialogState extends State<EmergencyDialog>
                                         'Emergency Alert!',
                                         style: TextStyle(
                                           color: Colors.white,
-                                          fontSize: 24,
+                                          fontSize: 20,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -313,7 +312,7 @@ class _EmergencyDialogState extends State<EmergencyDialog>
                 text,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),

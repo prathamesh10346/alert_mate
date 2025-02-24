@@ -14,6 +14,7 @@ import 'package:alert_mate/screen/services/SOSService.dart';
 import 'package:alert_mate/screen/services/ViolenceEmergencyScreen.dart';
 import 'package:alert_mate/utils/app_color.dart';
 import 'package:alert_mate/utils/size_config.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
@@ -192,6 +193,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
+  String? getProfilePhoto() {
+    final User? user = FirebaseAuth.instance.currentUser;
+    return user?.photoURL;
+  }
+
   Widget _buildTopBar(bool isDark) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
 
@@ -277,17 +283,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 SizedBox(width: 1.w),
                 Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    Icons.notifications_none,
-                    color: AppColors.primaryColor,
-                    size: 5.w,
-                  ),
-                ),
+                    padding: EdgeInsets.all(1),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: CircleAvatar(
+                      backgroundImage: NetworkImage(
+                          getProfilePhoto() ?? 'default_avatar_url'),
+                      radius: 17,
+                    )),
               ],
             ),
           ],
@@ -390,67 +395,67 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Center(
       child: GestureDetector(
         onTap: () async {
-        try {
-          setState(() {
-            _isEmergency = !_isEmergency;
-          });
+          try {
+            setState(() {
+              _isEmergency = !_isEmergency;
+            });
 
-          if (_isEmergency) {
-            // Start animations
-            _sosAnimationController.repeat(reverse: true);
+            if (_isEmergency) {
+              // Start animations
+              _sosAnimationController.repeat(reverse: true);
 
-            // Set context on the SOS service
-            _sosService.setContext(context);
+              // Set context on the SOS service
+              _sosService.setContext(context);
 
-            // Check for emergency contacts
-            final contacts = await _sosService.getEmergencyContacts();
-            if (contacts.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                        'Please add emergency contacts in settings first')),
-              );
-              setState(() => _isEmergency = false);
-              return;
-            }
+              // Check for emergency contacts
+              final contacts = await _sosService.getEmergencyContacts();
+              if (contacts.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text(
+                          'Please add emergency contacts in settings first')),
+                );
+                setState(() => _isEmergency = false);
+                return;
+              }
 
-            // Activate SOS if we have the current position
-            if (_currentPosition != null) {
-              await _sosService.activateSOS(_currentPosition!);
+              // Activate SOS if we have the current position
+              if (_currentPosition != null) {
+                await _sosService.activateSOS(_currentPosition!);
 
-              // Show confirmation to user
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                        'SOS activated! Emergency contacts will be notified.')),
-              );
+                // Show confirmation to user
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text(
+                          'SOS activated! Emergency contacts will be notified.')),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Waiting for location data...')),
+                );
+              }
             } else {
+              // Deactivate SOS
+              _sosService.deactivateSOS();
+              _sosAnimationController.reset();
+              _sosAnimationController.stop();
+
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Waiting for location data...')),
+                SnackBar(content: Text('SOS deactivated')),
               );
             }
-          } else {
-            // Deactivate SOS
-            _sosService.deactivateSOS();
-            _sosAnimationController.reset();
-            _sosAnimationController.stop();
 
+            // Haptic feedback
+            HapticFeedback.heavyImpact();
+          } catch (e) {
+            print('Error in SOS activation: $e');
+            setState(() => _isEmergency = false);
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('SOS deactivated')),
+              SnackBar(
+                  content: Text('Error activating SOS. Please try again.')),
             );
           }
-
-          // Haptic feedback
-          HapticFeedback.heavyImpact();
-        } catch (e) {
-          print('Error in SOS activation: $e');
-          setState(() => _isEmergency = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text('Error activating SOS. Please try again.')),
-          );
-        }
-      },
+        },
         child: AnimatedBuilder(
           animation: _sosAnimationController,
           builder: (context, child) {
@@ -624,7 +629,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       },
       {
         'icon': Icons.support,
-        'label': 'Rescue',
+        'label': 'Geo Fencing',
         'color': Color(0xFF00BCD4),
       },
     ];
@@ -725,7 +730,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       case 'Women Safety':
         screen = WomenSafetyScreen();
         break;
-      case 'Rescue':
+      case 'Geo Fencing':
         screen = GeofencingScreen();
         break;
       default:
